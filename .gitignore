@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+.env.local
+
+# Everything that is not part of the running app, kept for reference only: the two
+# source prototypes (with their own .git history), the standalone launch-page
+# preview, the original zip, the Zo0M.php page and the stray ind.htm placeholder.
+Archive/
+
+download-logs.json
+tokens.json
+ips.txt
+*.log
+.DS_Store

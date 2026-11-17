@@ -1,0 +1,23 @@
+{
+  "name": "zoomproj",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Zoom launch/join flow (Vite frontend) with Dropbox-backed, rate-limited installer downloads",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "start": "node server.js",
+    "dev:server": "node server.js",
+    "dropbox:refresh-token": "node scripts/dropbox-refresh-token.mjs",
+    "dropbox:list-files": "node scripts/dropbox-list-files.mjs",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "vite": "^7.2.4"
+  }
+}

